@@ -741,8 +741,7 @@ fn create_progress_bar(file_size: u64) -> ProgressBar {
     let pb = ProgressBar::new(file_size);
     pb.set_style(
         ProgressStyle::default_bar()
-            // .template("[{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({eta})")
-            .template("[{elapsed_precise}] [{wide_bar}] {bytes}/{total_bytes} ({eta})")
+            .template("{percent}% [{wide_bar}] {bytes} ({bytes_per_sec}) eta {eta}")
             .unwrap()
             .progress_chars("#>-"),
     );
