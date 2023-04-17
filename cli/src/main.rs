@@ -3,7 +3,6 @@ mod util;
 
 use std::time::{Duration, Instant};
 
-use arboard::Clipboard;
 use async_std::sync::Arc;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use color_eyre::{eyre, eyre::Context};
@@ -294,12 +293,6 @@ async fn main() -> eyre::Result<()> {
             .try_init()?;
     }
 
-    let mut clipboard = Clipboard::new()
-        .map_err(|err| {
-            log::warn!("Failed to initialize clipboard support: {}", err);
-        })
-        .ok();
-
     match app.command {
         WormholeCommand::Send {
             common,
@@ -320,7 +313,6 @@ async fn main() -> eyre::Result<()> {
                     true,
                     transfer::APP_CONFIG,
                     Some(&sender_print_code),
-                    clipboard.as_mut(),
                 )),
                 ctrl_c(),
             )
@@ -358,7 +350,6 @@ async fn main() -> eyre::Result<()> {
                     true,
                     transfer::APP_CONFIG,
                     Some(&sender_print_code),
-                    clipboard.as_mut(),
                 ));
                 match futures::future::select(connect_fut, ctrl_c()).await {
                     Either::Left((result, _)) => result?,
@@ -412,7 +403,6 @@ async fn main() -> eyre::Result<()> {
                     false,
                     app_config,
                     None,
-                    clipboard.as_mut(),
                 ));
                 match futures::future::select(connect_fut, ctrl_c()).await {
                     Either::Left((result, _)) => result?,
@@ -492,7 +482,6 @@ async fn main() -> eyre::Result<()> {
                     true,
                     app_config,
                     Some(&server_print_code),
-                    clipboard.as_mut(),
                 ));
                 let (wormhole, _code, relay_hints) =
                     match futures::future::select(connect_fut, ctrl_c()).await {
@@ -528,7 +517,6 @@ async fn main() -> eyre::Result<()> {
                 false,
                 app_config,
                 None,
-                clipboard.as_mut(),
             )
             .await?;
 
@@ -619,7 +607,6 @@ async fn parse_and_connect(
     print_code: Option<
         &dyn Fn(&mut Term, &magic_wormhole::Code, &Option<url::Url>) -> eyre::Result<()>,
     >,
-    clipboard: Option<&mut Clipboard>,
 ) -> eyre::Result<(Wormhole, magic_wormhole::Code, Vec<transit::RelayHint>)> {
     // TODO handle relay servers with multiple endpoints better
     let mut relay_hints: Vec<transit::RelayHint> = common_args
@@ -662,15 +649,7 @@ async fn parse_and_connect(
             let mailbox_connection =
                 MailboxConnection::create(app_config, code_length.unwrap()).await?;
 
-            /* Print code and also copy it to clipboard */
             if is_send {
-                if let Some(clipboard) = clipboard {
-                    match clipboard.set_text(mailbox_connection.code.to_string()) {
-                        Ok(()) => log::info!("Code copied to clipboard"),
-                        Err(err) => log::warn!("Failed to copy code to clipboard: {}", err),
-                    }
-                }
-
                 print_code.expect("`print_code` must be `Some` when `is_send` is `true`")(
                     term,
                     &mailbox_connection.code,
@@ -789,7 +768,7 @@ fn sender_print_code(
     .to_string();
     writeln!(
         term,
-        "\nThis wormhole's code is: {} (it has been copied to your clipboard)",
+        "\nThis wormhole's code is: {}.",
         style(&code).bold()
     )?;
     writeln!(term, "This is equivalent to the following link: \u{001B}]8;;{}\u{001B}\\{}\u{001B}]8;;\u{001B}\\", &uri, &uri)?;
