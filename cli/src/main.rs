@@ -282,6 +282,7 @@ async fn main() -> eyre::Result<()> {
             .filter_module("magic_wormhole::core", log::LevelFilter::Trace)
             .filter_module("mio", log::LevelFilter::Debug)
             .filter_module("ws", log::LevelFilter::Error)
+            .format_timestamp_micros()
             .try_init()?;
         log::debug!("Logging enabled.");
     } else {
