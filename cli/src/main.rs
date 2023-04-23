@@ -733,7 +733,7 @@ fn create_progress_handler(pb: ProgressBar) -> impl FnMut(u64, u64) {
         if sent == 0 {
             pb.reset_elapsed();
             pb.set_length(total);
-            pb.enable_steady_tick(std::time::Duration::from_millis(250));
+            pb.enable_steady_tick(std::time::Duration::from_millis(1000));
         }
         pb.set_position(sent);
     }
